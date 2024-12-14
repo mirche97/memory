@@ -3,15 +3,29 @@ import clsx from "clsx";
 import './App.css'
 
 function App() {
-  const [pairs, setPairs] = useState([1,2,3,4,5,6]);
-  const [turnClick, setTurnClick] = useState(0);
+    const initMessage = "Reveal the cards to find the pairs";
+    const newGameMessage = "Press the new game button to start the game";
 
-  const generateCards = pairs.flatMap((value, index) => [
+    const [pairs, setPairs] = useState([1,2,3,4,5,6]);
+    const [turnClick, setTurnClick] = useState(0);
+    const [turnStatus, setTurnStatus] = useState({
+        status: null,
+        label: ' ',
+    });
+    const [message, setMessage] = useState(initMessage);
+
+    const generateCards = pairs.flatMap((value, index) => [
       { id: `${value}-1`, content: value, isOpen: false, isGuessed: false },
       { id: `${value}-2`, content: value, isOpen: false, isGuessed: false },
     ])
 
-  const [cards, setCards] = useState(() => shuffleCards(generateCards));
+    const [cards, setCards] = useState(() => shuffleCards(generateCards));
+    const [gameOver, setGameOver] = useState(false);
+
+    function initGame() {
+        setCards(shuffleCards(generateCards));
+        setTurnClick(0);
+    };
 
   function shuffleCards(cards) {
       const shuffled = [];
@@ -29,14 +43,18 @@ function App() {
   }
 
   function openCard(cardId) {
+      if (turnClick === 0) {
+          closeReveladCards();
+      }
+
       setTurnClick(prev => prev + 1);
+
       setCards(prev => prev.map(card =>
           card.id === cardId ? {...card, isOpen: true} : card)
       )
   }
 
   useEffect(() => {
-      console.log("Turn Click Updated:", turnClick);
       if (turnClick === 2) {
           checkRevealedCards();
           setTurnClick(0);
@@ -44,29 +62,62 @@ function App() {
       }, [turnClick]
   );
 
+  useEffect(() => {
+      console.log("check if game is over");
+      const allCardsGuessed = cards.every(card => card.isGuessed);
+      console.log(`all cards guesssed: ${allCardsGuessed}`)
+      setGameOver(allCardsGuessed);
+  }, [cards]);
+
+    useEffect(() => {
+        console.log(`game over: ${gameOver}`);
+        if (gameOver)  {
+            setTurnStatus({
+                status: 'gameover',
+                label: "Game over!"
+            });
+            setMessage(newGameMessage);
+        }
+    }, [gameOver]);
+
   function checkRevealedCards() {
-      console.log("check revealed cards");
       const revealedCards = cards.filter(card => card.isOpen && !card.isGuessed);
       const revealedValue = revealedCards[0].content;
-      console.log(revealedValue);
+
       if (revealedCards.every(card => card.content === revealedValue)) {
           const quessedCards = revealedCards.map(card => ({...card, isGuessed: true }));
+          setTurnStatus({
+              status: 'guess',
+              label: "Guessed!"
+          });
+
           setCards(prev =>
               prev.map(card => quessedCards.find(gc => gc.id === card.id) || card)
           );
       } else {
-          const missedCards = revealedCards.map(card => ({...card, isOpen: false }));
-          setCards(prev =>
-              prev.map(card => missedCards.find(gc => gc.id === card.id) || card)
-          );
+          setTurnStatus({
+              status: 'miss',
+              label: "Missed!"
+          })
       }
   }
 
+  function closeReveladCards() {
+      const revealedCards = cards.filter(card => card.isOpen && !card.isGuessed);
+      const missedCards = revealedCards.map(card => ({...card, isOpen: false }));
+          setCards(prev =>
+              prev.map(card => missedCards.find(gc => gc.id === card.id) || card)
+          )
+  }
   return (
     <main>
         <header>
             <h1>Memory</h1>
         </header>
+        <section className={"game-status"}>
+            <h2 className={turnStatus.status}>{turnStatus.label}</h2>
+            <p>{message}</p>
+        </section>
         <section className={"cards-container"}>
                 {cards.map(card =>
                     <button
@@ -77,10 +128,11 @@ function App() {
                         })}
                         disabled={card.isGuessed || card.isOpen}
                         onClick={() => openCard(card.id)}
-                    >{card.content} {card.isOpen && "open"} {card.isGuessed && "guessed" }
+                    >{(card.isGuessed || card.isOpen) && card.content}
                     </button>
                 )}
         </section>
+        <section className={"new-game"} onClick={initGame}>{gameOver && <button className={"new-game-btn"}>New Game</button>}</section>
     </main>
   )
 }
