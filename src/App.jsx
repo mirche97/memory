@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react'
 import clsx from "clsx";
 import './App.css'
-
+// import {useTimer} from 'react-timer-hook'
+import Timer from "./components/Timer.jsx"
 function App() {
     const initMessage = "Reveal the cards to find the pairs";
     const newGameMessage = "Press the new game button to start the game";
@@ -55,17 +56,15 @@ function App() {
   }
 
   useEffect(() => {
-      if (turnClick === 2) {
-          checkRevealedCards();
-          setTurnClick(0);
-      }
+          if (turnClick === 2) {
+              checkRevealedCards();
+              setTurnClick(0);
+          }
       }, [turnClick]
   );
 
   useEffect(() => {
-      console.log("check if game is over");
       const allCardsGuessed = cards.every(card => card.isGuessed);
-      console.log(`all cards guesssed: ${allCardsGuessed}`)
       setGameOver(allCardsGuessed);
   }, [cards]);
 
@@ -109,7 +108,8 @@ function App() {
               prev.map(card => missedCards.find(gc => gc.id === card.id) || card)
           )
   }
-  return (
+
+    return (
     <main>
         <header>
             <h1>Memory</h1>
@@ -118,8 +118,11 @@ function App() {
             <h2 className={turnStatus.status}>{turnStatus.label}</h2>
             <p>{message}</p>
         </section>
+        <section>
+            <Timer timeInSeconds={90}/>
+        </section>
         <section className={"cards-container"}>
-                {cards.map(card =>
+            {cards.map(card =>
                     <button
                         key={card.id}
                         className={clsx("card", {

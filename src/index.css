@@ -23,17 +23,10 @@ section.game-status {
   align-items: center;
 }
 
-section.game-status > h2.guess {
-  color: limegreen;
+section.game-status > h2 {
+
 }
 
-section.game-status > h2.miss {
-  color: orangered;
-}
-
-section.game-status > h2.gameover {
-  color: deepskyblue;
-}
 .cards-container {
   margin-top: 50px;
   display: flex;
